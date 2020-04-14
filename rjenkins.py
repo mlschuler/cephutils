@@ -10,21 +10,24 @@ def to32(x):
         return to32(x + 0x100000000)
     return x & 0xffffffff
 
-def rot32(x, num):
+def lshift32(x, num):
     assert x>=0 and x<=0xffffffff
-    assert num>0 and num<32 
-    return ((x << num) & 0xffffffff) ^ (x >> (32-num))
+    return (x << num) & 0xffffffff
+
+def rshift32(x, num):
+    assert x>=0 and x<=0xffffffff
+    return x >> num
 
 def mix(a, b, c):
-    a = to32(a-b-c) ^ rot32(c, 32-13)
-    b = to32(b-a-c) ^ rot32(a, 8)
-    c = to32(c-a-b) ^ rot32(b, 32-13)
-    a = to32(a-b-c) ^ rot32(c, 32-12)
-    b = to32(b-a-c) ^ rot32(a, 16)
-    c = to32(c-a-b) ^ rot32(b, 32-5)
-    a = to32(a-b-c) ^ rot32(c, 32-3)
-    b = to32(b-a-c) ^ rot32(a, 10)
-    c = to32(c-a-b) ^ rot32(b, 32-15)
+    a = to32(a-b-c) ^ rshift32(c, 13)
+    b = to32(b-a-c) ^ lshift32(a, 8)
+    c = to32(c-a-b) ^ rshift32(b, 13)
+    a = to32(a-b-c) ^ rshift32(c, 12)
+    b = to32(b-a-c) ^ lshift32(a, 16)
+    c = to32(c-a-b) ^ rshift32(b, 5)
+    a = to32(a-b-c) ^ rshift32(c, 3)
+    b = to32(b-a-c) ^ lshift32(a, 10)
+    c = to32(c-a-b) ^ rshift32(b, 15)
     return a, b, c
 
 def rjenkins(input):
@@ -75,6 +78,12 @@ def rjenkins(input):
 
     a, b, c = mix(to32(a), to32(b), to32(c))
     return c
+
+# uncomment the following to run some basic tests
+# assert rjenkins("0") == 0xf18a3536
+# assert rjenkins("messages1") == 0x541b5f28
+# assert rjenkins("messages1234messages1234") == 0xb7dd8ed3
+# assert rjenkins("messages1234messages12345657hsh82j99sjsjjsksk") == 0xddaee492
 
 if len(sys.argv) != 2:
     print ("pass a string to compute the rjenkins hash of it")
